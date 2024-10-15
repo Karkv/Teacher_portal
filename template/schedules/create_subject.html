@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Subject</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <div class="bg-white shadow-md rounded-lg p-8 max-w-lg w-full">
+        <h1 class="text-2xl font-bold mb-6 text-center">Create a New Subject</h1>
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="name" class="block font-semibold mb-2">Subject Name:</label>
+                <input type="text" id="name" name="name" class="w-full p-2 border rounded" required>
+            </div>
+
+            <div>
+                <label for="total_hours" class="block font-semibold mb-2">Total Hours:</label>
+                <input type="number" step="0.1" id="total_hours" name="total_hours" class="w-full p-2 border rounded" required>
+            </div>
+
+            <div>
+                <label for="start_date" class="block font-semibold mb-2">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" class="w-full p-2 border rounded" required>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Create Subject
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Holiday</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <div class="bg-white shadow-md rounded-lg p-8 max-w-lg w-full">
+        <h1 class="text-2xl font-bold mb-6 text-center">Create a New Holiday</h1>
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="name" class="block font-semibold mb-2">Holiday Name:</label>
+                <input type="text" id="name" name="name" class="w-full p-2 border rounded" required>
+            </div>
+
+            <div>
+                <label for="date" class="block font-semibold mb-2">Holiday Date:</label>
+                <input type="date" id="date" name="date" class="w-full p-2 border rounded" required>
+            </div>
+
+            <button type="submit" class="w-full bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Create Holiday
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>

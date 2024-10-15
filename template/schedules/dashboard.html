@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <!-- FullCalendar CSS & JS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+
+    <style>
+        .fc-event {
+            color: white !important;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Teacher Info Section -->
+        <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome, {{ teacher.user.username }}</h2>
+            <ul class="list-disc list-inside">
+                {% for data in performance_data %}
+                    <li class="mb-2">
+                        <strong>{{ data.subject }}</strong> - 
+                        Total: {{ data.total_hours }} hrs, 
+                        Completed: {{ data.completed_hours }} hrs, 
+                        Remaining: {{ data.remaining_hours }} hrs
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="mt-4 flex space-x-4">
+                <a href="{% url 'create_subject' %}" 
+                   class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Add New Subject
+                </a>
+                <a href="{% url 'create_holiday' %}" 
+                   class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Create Holiday
+                </a>
+            </div>
+        </div>
+
+        <!-- Performance Overview -->
+        <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Performance Overview</h3>
+            {% for data in performance_data %}
+                <h1 class="text-2xl">{{ data.subject }}</h1> 
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-100 text-blue-800 p-4 rounded-lg text-center">
+                        <div class="text-2xl font-bold">{{ data.total_hours }}</div>
+                        <div>Total Hours</div>
+                    </div>
+                    <div class="bg-green-100 text-green-800 p-4 rounded-lg text-center">
+                        <div class="text-2xl font-bold">{{ data.completed_hours }}</div>
+                        <div>Completed Hours</div>
+                    </div>
+                    <div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg text-center">
+                        <div class="text-2xl font-bold">{{ data.remaining_hours }}</div>
+                        <div>Remaining Hours</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Calendar Section -->
+        <div id="calendar" class="bg-white p-6 rounded-lg shadow-lg"></div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const subjectColors = {}; // Store unique colors for each subject
+
+                // Function to generate random colors for subjects
+                function getRandomColor() {
+                    const letters = '0123456789ABCDEF';
+                    let color = '#';
+                    for (let i = 0; i < 6; i++) {
+                        color += letters[Math.floor(Math.random() * 16)];
+                    }
+                    return color;
+                }
+
+                const calendarEl = document.getElementById('calendar');
+
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    events: '/api/schedule/',  // Fetch events from your API
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    eventContent: function (info) {
+                        const eventClass = info.event.extendedProps.type === 'holiday' ? 'holiday' : 'class';
+
+                        // Assign a unique color to each subject
+                        if (info.event.extendedProps.subject) {
+                            if (!subjectColors[info.event.extendedProps.subject]) {
+                                subjectColors[info.event.extendedProps.subject] = getRandomColor();
+                            }
+                            info.event.setProp('backgroundColor', subjectColors[info.event.extendedProps.subject]);
+                        }
+
+                        return {
+                            html: `<div class="${eventClass}" style="background-color:${info.event.backgroundColor || ''};">${info.event.title}</div>`
+                        };
+                    },
+                    eventDidMount: function (info) {
+                        $(info.el).tooltip({
+                            title: info.event.title,
+                            placement: 'top',
+                            trigger: 'hover',
+                            container: 'body'
+                        });
+                    }
+                });
+
+                calendar.render();  // Render the calendar
+            });
+        </script>
+    </div>
+
+</body>
+
+</html>
