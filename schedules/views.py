@@ -6,7 +6,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
-from datetime import datetime
+from datetime import datetime, timedelta
+import holidays  # Import the holidays library
 
 # Teacher Dashboard with Subject Performance Overview
 @login_required
@@ -59,8 +60,6 @@ def create_holiday(request):
     return render(request, 'schedules/create_holiday.html')
 
 # Fetch Teacher Schedule and Holidays for FullCalendar
-import holidays  # Import the holidays library
-
 @login_required
 def get_teacher_schedule(request):
     teacher = get_object_or_404(Teacher, user=request.user)
@@ -71,14 +70,14 @@ def get_teacher_schedule(request):
         {
             'title': f"{schedule.subject.name} - {schedule.duration_minutes} min",
             'start': schedule.start_time.isoformat(),
-            'end': (schedule.start_time + pd.Timedelta(minutes=schedule.duration_minutes)).isoformat(),
+            'end': (schedule.start_time + timedelta(minutes=schedule.duration_minutes)).isoformat(),
             'type': 'class',
             'subject': schedule.subject.name,  # Pass subject name for coloring
         } for schedule in schedules
     ]
 
     # Add built-in holidays from the holidays library (e.g., India holidays)
-    india_holidays = holidays.India(years=202)  # Add year dynamically if needed
+    india_holidays = holidays.India(years=2024)  # Adjust the year dynamically if needed
     for date, name in india_holidays.items():
         events.append({
             'title': name,
@@ -101,7 +100,6 @@ def get_teacher_schedule(request):
 
 
 # Create Subject with Start Date
-
 @login_required
 def create_subject(request):
     if request.method == 'POST':
@@ -124,6 +122,65 @@ def create_subject(request):
 
     return render(request, 'schedules/create_subject.html')
 
+# Create Custom Event for the Calendar (Classes)
+@login_required
+def create_event(request):
+    if request.method == 'POST':
+        teacher = get_object_or_404(Teacher, user=request.user)
+        subject_id = request.POST.get('subject')
+        subject = get_object_or_404(Subject, id=subject_id)
+
+        # Get start date, time, and duration from the form
+        start_date_str = request.POST.get('start_time')
+        start_time = datetime.strptime(start_date_str, '%Y-%m-%dT%H:%M')  # Parse start time
+        duration = int(request.POST.get('duration'))  # Total duration in hours for the subject
+        
+        # Calculate total number of periods (e.g., 45 minutes each)
+        total_minutes = duration * 60
+        period_duration = 45  # Each period lasts 45 minutes
+        total_periods = total_minutes // period_duration
+
+        # Holidays list (including national and custom holidays)
+        india_holidays = holidays.India(years=start_time.year)
+        custom_holidays = set(Holiday.objects.values_list('date', flat=True))  # Custom holidays
+
+        # Calculate events and skip holidays and weekends
+        current_time = start_time
+        periods_left = total_periods
+
+        while periods_left > 0:
+            # Skip weekends (Saturday and Sunday)
+            if current_time.weekday() >= 6:
+                current_time += timedelta(days=1)
+                continue
+
+            # Skip holidays
+            if current_time.date() in india_holidays or current_time.date() in custom_holidays:
+                current_time += timedelta(days=1)
+                continue
+
+            # Create the event for this day and time
+            Schedule.objects.create(
+                teacher=teacher,
+                subject=subject,
+                start_time=current_time,
+                duration_minutes=period_duration,
+            )
+
+            periods_left -= 1
+            # Increment time by 1 day for the next event
+            current_time += timedelta(days=1)
+
+        return redirect('teacher_dashboard')
+
+    # Render event creation form with subjects
+    return render(request, 'schedules/create_event.html', {
+        'subjects': Subject.objects.all(),
+    })
+
+    return render(request, 'schedules/create_event.html', {
+        'subjects': Subject.objects.all(),
+    })
 
 # Login and Logout Views
 def login_view(request):

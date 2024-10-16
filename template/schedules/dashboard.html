@@ -21,6 +21,16 @@
             padding: 5px;
             border-radius: 4px;
             font-size: 0.875rem;
+            outline: none !important;
+            border: none !important;
+        }
+
+        .holiday {
+            background-color: #e74c3c !important; /* Red for Holidays */
+        }
+
+        .class {
+            background-color: #27ae60 !important; /* Green for Classes */
         }
     </style>
 </head>
@@ -42,13 +52,14 @@
                 {% endfor %}
             </ul>
             <div class="mt-4 flex space-x-4">
-                <a href="{% url 'create_subject' %}" 
-                   class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                <a href="{% url 'create_subject' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     Add New Subject
                 </a>
-                <a href="{% url 'create_holiday' %}" 
-                   class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                <a href="{% url 'create_holiday' %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                     Create Holiday
+                </a>
+                <a href="{% url 'create_event' %}" class="bg-orange-800 text-white px-4 py-2 rounded hover:bg-orange-600">
+                    Create Event
                 </a>
             </div>
         </div>
@@ -80,9 +91,8 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                const subjectColors = {}; // Store unique colors for each subject
+                const subjectColors = {};
 
-                // Function to generate random colors for subjects
                 function getRandomColor() {
                     const letters = '0123456789ABCDEF';
                     let color = '#';
@@ -96,38 +106,47 @@
 
                 const calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
-                    events: '/api/schedule/',  // Fetch events from your API
                     headerToolbar: {
                         left: 'prev,next today',
                         center: 'title',
                         right: 'dayGridMonth,timeGridWeek,timeGridDay'
                     },
+                    events: function(fetchInfo, successCallback, failureCallback) {
+                        $.ajax({
+                            url: '{% url "get_teacher_schedule" %}',
+                            method: 'GET',
+                            dataType: 'json',
+                            success: function(data) {
+                                console.log('Fetched events:', data);  // Debugging output
+                                successCallback(data);
+                            },
+                            error: function() {
+                                failureCallback();
+                                alert('There was an error while fetching events!');
+                            }
+                        });
+                    },
                     eventContent: function (info) {
                         const eventClass = info.event.extendedProps.type === 'holiday' ? 'holiday' : 'class';
 
                         // Assign a unique color to each subject
+                        let backgroundColor = '';
                         if (info.event.extendedProps.subject) {
                             if (!subjectColors[info.event.extendedProps.subject]) {
                                 subjectColors[info.event.extendedProps.subject] = getRandomColor();
                             }
-                            info.event.setProp('backgroundColor', subjectColors[info.event.extendedProps.subject]);
+                            backgroundColor = subjectColors[info.event.extendedProps.subject];
+                        } else if (info.event.extendedProps.type === 'holiday') {
+                            backgroundColor = '#e74c3c'; // Default color for holidays
                         }
 
                         return {
-                            html: `<div class="${eventClass}" style="background-color:${info.event.backgroundColor || ''};">${info.event.title}</div>`
+                            html: `<div class="${eventClass}" style="background-color:${backgroundColor};">${info.event.title}</div>`
                         };
                     },
-                    eventDidMount: function (info) {
-                        $(info.el).tooltip({
-                            title: info.event.title,
-                            placement: 'top',
-                            trigger: 'hover',
-                            container: 'body'
-                        });
-                    }
                 });
 
-                calendar.render();  // Render the calendar
+                calendar.render();
             });
         </script>
     </div>

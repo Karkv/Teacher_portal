@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Event</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-lg">
+        <h1 class="text-2xl font-bold mb-4">Create Event</h1>
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- Select Subject -->
+            <label for="subject" class="block text-gray-700 font-semibold mb-2">Select Subject:</label>
+            <select id="subject" name="subject" class="w-full p-2 border rounded-lg mb-4" required>
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}">{{ subject.name }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Start Date and Time -->
+            <label for="start_time" class="block text-gray-700 font-semibold mb-2">Start Date & Time:</label>
+            <input type="datetime-local" id="start_time" name="start_time" class="w-full p-2 border rounded-lg mb-4" required>
+
+            <!-- Total Duration -->
+            <label for="duration" class="block text-gray-700 font-semibold mb-2">Total Duration (Hours):</label>
+            <input type="number" id="duration" name="duration" class="w-full p-2 border rounded-lg mb-4" required>
+
+            <!-- Submit Button -->
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Create Events
+            </button>
+        </form>
+    </div>
+</body>
+</html>
